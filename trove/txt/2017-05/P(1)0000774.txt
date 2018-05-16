@@ -12,7 +12,7 @@ Ad Impressions 10.834
 Ad Clicks 2,234
 Ad Spend 333.59 RUB
 Ad Creation Date 05/24/17 08:00:00 AM PDT
-Ad End Date 05/25/17 08-00-00 AM PDT
+Ad End Date 05/25/17 08:00:00 AM PDT
 
 Redactions Completed at the Direction of Ranking Member
 of the US House Permanent Select Committee on Intelligence
