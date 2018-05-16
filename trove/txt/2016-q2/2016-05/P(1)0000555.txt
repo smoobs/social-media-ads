@@ -9,8 +9,8 @@ devices
 Ad Impressions 0
 Ad Clicks 0
 Ad Spend 0.00
-Ad Creation Date 05/16/16 04:1&54 AM PDT
-Ad End Date 05/17/16 04:1&53 AM PDT
+Ad Creation Date 05/16/16 04:17:54 AM PDT
+Ad End Date 05/17/16 04:17:53 AM PDT
 
 Redactions Completed at the Direction of Ranking Member
 of the US House Permanent Select Committee on Intelligence
