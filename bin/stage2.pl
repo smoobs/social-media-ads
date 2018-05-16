@@ -125,6 +125,13 @@ my $f_age = sub {
   return $rep;
 };
 
+my $f_url = sub {
+  my $val = shift;
+  $val =~ s/\s+//g;
+  $val =~ s{^(https?):H}{$1://};
+  return $val;
+};
+
 my $f_nop = sub { $_[0] };
 
 my %field_trans = (
@@ -138,7 +145,7 @@ my %field_trans = (
   id                   => $f_integer,
   impressions          => $f_integer,
   interests            => $f_nop,
-  landing_page         => $f_nop,
+  landing_page         => $f_url,
   language             => $f_nop,
   people_who_match     => $f_nop,
   placements           => $f_nop,
@@ -175,7 +182,7 @@ for my $rec (@$stash) {
   push @$stash_out, $out;
 }
 
-inspect( survey( $stash_out, 'excluded_connections' ) );
+inspect( survey( $stash_out, 'landing_page' ) );
 
 save_json( OUT, $stash_out );
 
