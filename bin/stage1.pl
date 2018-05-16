@@ -59,7 +59,7 @@ sub scan {
   my $file = shift;
 
   my $fh  = $file->openr;
-  my $rec = {};
+  my $rec = { source => "$file" };
   my $key = undef;
 
   while (<$fh>) {
@@ -71,15 +71,15 @@ sub scan {
     s/\x0c//g;    # Remove form feed
 
     my $ln = $_;
-    if ( $ln =~ /^($field_re)\s*(.+)/ ) {
+    if ( $ln =~ /^($field_re)\s*(.*)/ ) {
       my ( $tag, $tail ) = ( $1, $2 );
       die "Can't map \"$tag\"" unless exists $field_tag{$tag};
       $key = $field_tag{$tag};
-      push @{ $rec->{$key} }, $tail if defined $key;
+      $ln  = $tail;
     }
-    else {
-      push @{ $rec->{$key} }, $ln if defined $key;
-    }
+
+    push @{ $rec->{$key} }, $ln
+     if defined $key && length $ln;
   }
   return $rec;
 }
