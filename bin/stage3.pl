@@ -43,12 +43,8 @@ for my $rec (@$stash) {
   for my $attr (@flat) {
     my ( $fd, $val ) = @$attr;
     my $mfd = $mapper->($fd);
-    if ( $mfd =~ /^(.+)\[\]$/ ) {
-      push @{ $out->{$1} }, $val;
-    }
-    else {
-      $out->{$mfd} = $val;
-    }
+    if ( $mfd =~ /^(.+)\[\]$/ ) { push @{ $out->{$1} }, $val }
+    else                        { $out->{$mfd} = $val }
   }
   push @$stash_out, $out;
 }

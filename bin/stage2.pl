@@ -198,7 +198,7 @@ my %field_trans = (
   spend                  => $f_currency,
   sponsored              => $f_nop,
   targeting_custom       => $f_nop,
-  targeting_location     => $f_location,
+  location               => $f_location,
   text                   => $f_nop,
 );
 
@@ -227,7 +227,7 @@ for my $rec (@$stash) {
   push @$stash_out, $out;
 }
 
-#inspect( survey( $stash_out, 'targeting_location' ) );
+#inspect( survey( $stash_out, 'location' ) );
 
 save_json( OUT, $stash_out );
 
