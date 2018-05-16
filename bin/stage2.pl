@@ -54,6 +54,12 @@ my $f_number = sub {
   return 1 * $val;
 };
 
+my $f_integer = sub {
+  my $val = $f_number->(shift);
+  $val =~ s/\.//g;
+  return 1 * $val;
+};
+
 my $f_currency = sub {
   my $val = shift;
 
@@ -108,29 +114,40 @@ my $f_date = sub {
   return $date->format_cldr("yyyy-MM-dd'T'HH:mm:ssZ");
 };
 
+my $f_age = sub {
+  my $val = shift;
+
+  report "Bad age: $val"
+   unless $val =~ /^(\d+)[-\s]+(\d+\+?)$/;
+
+  my $rep = { min => $1 };
+  $rep->{max} = $2 unless $2 eq "65+";
+  return $rep;
+};
+
 my $f_nop = sub { $_[0] };
 
 my %field_trans = (
-  ad_clicks             => $f_number,
-  ad_creation_date      => $f_date,
-  ad_custom_includes    => $f_nop,
-  ad_end_date           => $f_date,
-  ad_id                 => $f_number,
-  ad_impressions        => $f_number,
-  ad_landing_page       => $f_nop,
-  ad_spend              => $f_currency,
-  ad_targeting_custom   => $f_nop,
-  ad_targeting_location => $f_nop,
-  ad_text               => $f_nop,
-  age                   => $f_nop,
-  excluded_connections  => $f_nop,
-  gender                => $f_nop,
-  interests             => $f_nop,
-  language              => $f_nop,
-  people_who_match      => $f_nop,
-  placements            => $f_nop,
-  source                => $f_nop,
-  sponsored             => $f_nop,
+  age                  => $f_age,
+  clicks               => $f_integer,
+  creation_date        => $f_date,
+  custom_includes      => $f_nop,
+  end_date             => $f_date,
+  excluded_connections => $f_nop,
+  gender               => $f_nop,
+  id                   => $f_integer,
+  impressions          => $f_integer,
+  interests            => $f_nop,
+  landing_page         => $f_nop,
+  language             => $f_nop,
+  people_who_match     => $f_nop,
+  placements           => $f_nop,
+  source               => $f_nop,
+  spend                => $f_currency,
+  sponsored            => $f_nop,
+  targeting_custom     => $f_nop,
+  targeting_location   => $f_nop,
+  text                 => $f_nop,
 );
 
 my $stash     = load_json(IN);
@@ -142,10 +159,9 @@ for my $rec (@$stash) {
   my $out = {};
 
   while ( my ( $k, $v ) = each %$rec ) {
-    if ( $k eq "source" ) { $out->{$k} = $rec->{$k}; next }
     my $xlate = $field_trans{$k} // report "Can't map: $k";
-    my $val = join " ", @$v;
-    my $xv = $xlate->($val);
+    $v = join " ", @$v if "ARRAY" eq ref $v;
+    my $xv = $xlate->($v);
     if ( "HASH" eq ref $xv && !delete $xv->{_deep} ) {
       while ( my ( $hk, $hv ) = each %$xv ) {
         $out->{ join "_", $k, $hk } = $hv;
@@ -159,7 +175,7 @@ for my $rec (@$stash) {
   push @$stash_out, $out;
 }
 
-inspect( survey( $stash_out, 'age' ) );
+inspect( survey( $stash_out, 'excluded_connections' ) );
 
 save_json( OUT, $stash_out );
 
