@@ -6,9 +6,7 @@ use autodie;
 use strict;
 use warnings;
 
-use DateTime::Format::ISO8601;
 use DateTime;
-use File::Find;
 use JSON ();
 use List::Util qw( max );
 use Path::Class;
@@ -32,6 +30,10 @@ my %tz_map = (
   PDT => '-0700',
   PST => '-0800',
 );
+
+my $f_or_list = sub {
+  return [or_list( $_[0] )];
+};
 
 my $f_number = sub {
   my $val = shift;
@@ -66,7 +68,7 @@ my $f_currency = sub {
   return { amount => 0, currency => "UNK" }
    if $val eq "None" || $val =~ /^0+(?:\.0+)?$/;
 
-  $val =~ s/US0/USD/;
+  $val =~ s/US[0O]/USD/;
   $val =~ s/\s+$//;
 
   report "Bad currency: $val"
@@ -132,29 +134,72 @@ my $f_url = sub {
   return $val;
 };
 
+my $f_match = make_tag_matcher(
+  { 'Behaviors'              => 'behaviors',
+    'Employers'              => 'employers',
+    'Field of study'         => 'field_of_study',
+    'Friends of connections' => 'friends_of_connections',
+    'Friends of people who'  => 'friends_of',
+    'Industry'               => 'industry',
+    'Interests'              => 'interests',
+    'Job title'              => 'job_title',
+    'People who like'        => 'like',
+    'Politics'               => 'politics',
+  }
+);
+
+my $f_location_match = make_tag_matcher(
+  { 'Living In:'   => 'living_in',
+    'Recently In:' => 'recently_in',
+  },
+  "living_in"
+);
+
+my $f_location = sub {
+  my $val = shift;
+  $val =~ s/^-\s*//;
+  return $f_location_match->($val);
+};
+
+my $f_behave = make_tag_matcher(
+  { 'Field of study'          => 'field_of_study',
+    'Multicultural Affinity:' => 'multicultural_affinity',
+  },
+  'behaviour'
+);
+
 my $f_nop = sub { $_[0] };
 
 my %field_trans = (
-  age                  => $f_age,
-  clicks               => $f_integer,
-  creation_date        => $f_date,
-  custom_includes      => $f_nop,
-  end_date             => $f_date,
-  excluded_connections => $f_nop,
-  gender               => $f_nop,
-  id                   => $f_integer,
-  impressions          => $f_integer,
-  interests            => $f_nop,
-  landing_page         => $f_url,
-  language             => $f_nop,
-  people_who_match     => $f_nop,
-  placements           => $f_nop,
-  source               => $f_nop,
-  spend                => $f_currency,
-  sponsored            => $f_nop,
-  targeting_custom     => $f_nop,
-  targeting_location   => $f_nop,
-  text                 => $f_nop,
+  age                    => $f_age,
+  also_match             => $f_match,
+  behaviors              => $f_behave,
+  clicks                 => $f_integer,
+  connections            => $f_nop,
+  creation_date          => $f_date,
+  currently_using        => $f_or_list,
+  custom_includes        => $f_nop,
+  end_date               => $f_date,
+  excluded_connections   => $f_nop,
+  gender                 => $f_nop,
+  generation             => $f_nop,
+  id                     => $f_integer,
+  impressions            => $f_integer,
+  interest_expansion     => $f_nop,
+  interests              => $f_or_list,
+  job_title              => $f_or_list,
+  landing_page           => $f_url,
+  language               => $f_or_list,
+  match                  => $f_match,
+  multicultural_affinity => $f_nop,
+  placements             => $f_or_list,
+  politics               => $f_or_list,
+  source                 => $f_nop,
+  spend                  => $f_currency,
+  sponsored              => $f_nop,
+  targeting_custom       => $f_nop,
+  targeting_location     => $f_location,
+  text                   => $f_nop,
 );
 
 my $stash     = load_json(IN);
@@ -182,7 +227,7 @@ for my $rec (@$stash) {
   push @$stash_out, $out;
 }
 
-inspect( survey( $stash_out, 'landing_page' ) );
+#inspect( survey( $stash_out, 'targeting_location' ) );
 
 save_json( OUT, $stash_out );
 
@@ -209,6 +254,7 @@ sub survey {
     for my $key (@key) {
       next unless exists $rec->{$key};
       my $val = $rec->{$key};
+      $val = JSON->new->canonical->encode($val) if ref $val;
       push @{ $survey->{$key}{$val} }, $rec->{source};
     }
   }
@@ -217,6 +263,62 @@ sub survey {
 }
 
 sub set_context { $context = shift }
+
+sub or_list {
+  my $val = shift;
+  $val =~ s/^[:]//;
+  return grep { length } map { strip($_) } split /[,;]|\bor\b/, $val;
+}
+
+sub make_tag_matcher {
+  my $tags = shift;
+  my $initial = shift // "unknown";
+
+  my $re = make_hash_re($tags);
+
+  return sub {
+    my $val  = shift;
+    my @part = split /($re)/, $val;
+    my $rec  = { _deep => 1 };
+    my $kind = $initial;
+
+    while (@part) {
+      my $pv = shift @part;
+      if ( length $pv ) {
+        $pv =~ s/^[:.]\s*//;
+        push @{ $rec->{$kind} }, or_list($pv);
+      }
+      last unless @part;
+      my $kind_tag = shift @part;
+      $kind = $tags->{$kind_tag} // report "Bad tag: $kind_tag";
+    }
+
+    return $rec;
+  };
+}
+
+sub make_hash_re {
+  my $map  = shift;
+  my @keys = sort { length $b <=> length $a } keys %$map;
+  my $alt  = join "|", map quotemeta, @keys;
+  return qr{$alt};
+}
+
+sub strip {
+  my $s = shift;
+  for ($s) {
+    s/^\s+//;
+    s/[.\s]+$//;
+    s/\s+/ /;
+  }
+  return $s;
+}
+
+sub tidy {
+  my $s = shift;
+  s/^\s+//, s/\s+$//, s/\s+/ / for $s;
+  return $s;
+}
 
 sub save_json {
   my ( $file, $json ) = @_;

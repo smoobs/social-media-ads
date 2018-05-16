@@ -29,19 +29,31 @@ my %field_tag = (
   'Ad Targeting Location'   => 'targeting_location',
   'Ad Targeting Location:'  => 'targeting_location',
   'Ad Text'                 => 'text',
+  'Affinity:'               => 'affinity',
   'Age:'                    => 'age',
+  'And Must Also Match'     => 'also_match',
+  'Behaviors:'              => 'behaviors',
+  'Connections:'            => 'connections',
   'Excluded Connections:'   => 'excluded_connections',
+  'Field of study:'         => 'field_of_study',
   'Gender:'                 => 'gender',
+  'Generation:'             => 'generation',
+  'Interest expansion:'     => 'interest_expansion',
   'Interests:'              => 'interests',
+  'Job title'               => 'job_title',
+  'Landing Page'            => 'landing_page',
   'Language:'               => 'language',
-  'People Who Match:'       => 'people_who_match',
+  'Multicultural Affinity:' => 'multicultural_affinity',
+  'People Who Match:'       => 'match',
   'Placements'              => 'placements',
   'Placements:'             => 'placements',
+  'Currently using OS:'     => 'currently_using',
+  'Politics:'               => 'politics',
   'Redactions Completed at' => undef,
   'Sponsored'               => 'sponsored',
 );
 
-my $field_re = make_field_re( \%field_tag );
+my $field_re = make_hash_re( \%field_tag );
 
 my $stash = [];
 
@@ -61,7 +73,8 @@ save_json( OUT, $stash );
 sub scan {
   my $file = shift;
 
-  my $fh  = $file->openr;
+  my $fh = file($file)->openr;
+  $fh->binmode(":utf8");
   my $rec = { source => "$file" };
   my $key = undef;
 
@@ -88,7 +101,7 @@ sub scan {
   return $rec;
 }
 
-sub make_field_re {
+sub make_hash_re {
   my $map  = shift;
   my @keys = sort { length $b <=> length $a } keys %$map;
   my $alt  = join "|", map quotemeta, @keys;
