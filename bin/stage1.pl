@@ -12,7 +12,9 @@ use List::Util qw( max );
 use Path::Class;
 
 use constant TXT => dir("trove/txt");
-use constant OUT => file("stage1.json");
+use constant OUT => file("work/stage1.json");
+
+OUT->parent->mkpath;
 
 my %field_tag = (
   'Ad Impressions'          => 'ad_impressions',
