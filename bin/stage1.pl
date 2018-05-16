@@ -17,18 +17,18 @@ use constant OUT => file("work/stage1.json");
 OUT->parent->mkpath;
 
 my %field_tag = (
-  'Ad Clicks'               => 'ad_clicks',
-  'Ad Creation Date'        => 'ad_creation_date',
-  'Ad Custom Includes:'     => 'ad_custom_includes',
-  'Ad End Date'             => 'ad_end_date',
-  'Ad ID'                   => 'ad_id',
-  'Ad Impressions'          => 'ad_impressions',
-  'Ad Landing Page'         => 'ad_landing_page',
-  'Ad Spend'                => 'ad_spend',
-  'Ad Targeting Custom'     => 'ad_targeting_custom',
-  'Ad Targeting Location'   => 'ad_targeting_location',
-  'Ad Targeting Location:'  => 'ad_targeting_location',
-  'Ad Text'                 => 'ad_text',
+  'Ad Clicks'               => 'clicks',
+  'Ad Creation Date'        => 'creation_date',
+  'Ad Custom Includes:'     => 'custom_includes',
+  'Ad End Date'             => 'end_date',
+  'Ad ID'                   => 'id',
+  'Ad Impressions'          => 'impressions',
+  'Ad Landing Page'         => 'landing_page',
+  'Ad Spend'                => 'spend',
+  'Ad Targeting Custom'     => 'targeting_custom',
+  'Ad Targeting Location'   => 'targeting_location',
+  'Ad Targeting Location:'  => 'targeting_location',
+  'Ad Text'                 => 'text',
   'Age:'                    => 'age',
   'Excluded Connections:'   => 'excluded_connections',
   'Gender:'                 => 'gender',
@@ -72,6 +72,7 @@ sub scan {
     s/\s+$//;
     s/\s+/ /g;
     s/\x0c//g;    # Remove form feed
+    s/—/-/g;    # Normalise hyphens
 
     my $ln = $_;
     if ( $ln =~ /^($field_re)\s*(.*)/ ) {

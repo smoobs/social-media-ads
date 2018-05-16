@@ -2,7 +2,7 @@ Ad I D 3004
 Ad Text Hallelujah: Join our non denominational Christian group!
 Ad Landing Page https://www.facebook.com/Black_liberation_church-1160193507389202/
 Ad Targeting Location: United States
-Excluded Connections: Exclude people who like Black_Baptist_church
+Excluded Connections: Exclude people who like Black-Baptist-church
 Age: 18 - 65+
 Language: English (US)
 Placements: News Feed on desktop computers, News Feed on mobile
