@@ -8,6 +8,7 @@ use warnings;
 
 use JSON ();
 use Path::Class;
+use List::Util qw( max );
 
 use constant TXT => dir("trove/txt");
 use constant IN  => file("work/stage2.json");
@@ -28,25 +29,38 @@ my $stash     = load_json(IN);
 my $stash_out = [];
 
 my $mapper = make_mapper(
-  { 'also_match.*' => 'match.*',
-    'behaviors.*'  => 'match.*',
-    'interests'    => 'match.interests',
-    'job_title'    => 'match.job_title',
-    'politics'     => 'match.politics',
+  { 'also_match.*'           => 'match.*',
+    'behaviors.*'            => 'match.*',
+    'interests'              => 'match.interests',
+    'job_title'              => 'match.job_title',
+    'politics'               => 'match.politics',
+    'multicultural_affinity' => 'match.multicultural_affinity',
   }
 );
 
 for my $rec (@$stash) {
   set_context($rec);
-  my $out  = {};
-  my @flat = flatten($rec);
+  my $out     = {};
+  my @flat    = flatten($rec);
+  my %is_list = ();
   for my $attr (@flat) {
     my ( $fd, $val ) = @$attr;
     my $mfd = $mapper->($fd);
-    if ( $mfd =~ /^(.+)\[\]$/ ) { push @{ $out->{$1} }, $val }
-    else                        { $out->{$mfd} = $val }
+    if ( $mfd =~ /^(.+)\[\]$/ ) {
+      $is_list{$1}++;
+      push @{ $out->{$1} }, $val;
+    }
+    else { $out->{$mfd} = $val }
+  }
+  for my $list ( keys %is_list ) {
+    $out->{$list} = [unique( @{ $out->{$list} } )];
   }
   push @$stash_out, $out;
+}
+
+my $max_id = max 1, grep { defined } map { $_->{id} } @$stash_out;
+for my $rec (@$stash_out) {
+  $rec->{id} //= ++$max_id;
 }
 
 save_json( OUT, $stash_out );
@@ -100,6 +114,12 @@ sub flatten {
 }
 
 sub set_context { $context = shift }
+
+sub unique {
+  my %seen = ();
+  my @got = grep { !$seen{$_}++ } @_;
+  return @got;
+}
 
 sub save_json {
   my ( $file, $json ) = @_;

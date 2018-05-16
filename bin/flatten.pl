@@ -8,7 +8,6 @@ use warnings;
 
 use DateTime;
 use JSON ();
-use List::Util qw( max );
 use Path::Class;
 
 STDOUT->binmode(":utf8");

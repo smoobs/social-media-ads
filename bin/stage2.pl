@@ -7,6 +7,7 @@ use strict;
 use warnings;
 
 use DateTime;
+use DateTime::Format::MySQL;
 use JSON ();
 use List::Util qw( max );
 use Path::Class;
@@ -111,9 +112,10 @@ my $f_date = sub {
     minute    => $mi,
     second    => $se,
     time_zone => $tz_offset,
+    formatter => 'DateTime::Format::MySQL',
   );
 
-  return $date->format_cldr("yyyy-MM-dd'T'HH:mm:ssZ");
+  return "$date";
 };
 
 my $f_age = sub {

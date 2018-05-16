@@ -22,6 +22,7 @@ my %field_tag = (
   'Ad Custom Includes:'     => 'custom_includes',
   'Ad End Date'             => 'end_date',
   'Ad ID'                   => 'id',
+  'Ad I D'                  => 'id',
   'Ad Impressions'          => 'impressions',
   'Ad Landing Page'         => 'landing_page',
   'Ad Spend'                => 'spend',
